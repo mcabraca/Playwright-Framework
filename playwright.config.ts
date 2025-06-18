@@ -40,7 +40,7 @@ export default defineConfig({
     /*This attribute is used to locate elements, default option is testId */
     testIdAttribute: "id",
   },
-  // globalSetup: "./utils/globalSetup.ts",
+  globalSetup: "./utils/globalSetup.ts",
   timeout: 300000,
   expect: {
     timeout: 90000,
