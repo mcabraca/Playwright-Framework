@@ -46,7 +46,7 @@ npm run env-qa-headed example
 > ℹ️ **Note:** Full file name is not required — the match only needs to **contain** the file name (e.g., `example` matches `example.spec.ts`).
 > More scripts could be added in package.json
 ```
-### 📤 Reporting Test Results to TestRail
+## 📤 Reporting Test Results to TestRail
 
 This project includes a powerful custom script, `report_testrail_results.js`, which automatically parses JUnit XML reports and publishes the results to [TestRail](https://www.gurock.com/testrail/). It supports:
 
@@ -59,7 +59,7 @@ This project includes a powerful custom script, `report_testrail_results.js`, wh
 
 ---
 
-### ⚙️ How to Use It in GitHub Actions
+## ⚙️ How to Use It in GitHub Actions
 
 In your workflow YAML (e.g., `staging.yml`), include the following step **after** test execution:
 
