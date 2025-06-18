@@ -1,0 +1,35 @@
+{
+  "name": "base-playwright-qa-testing",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "env-qa": "cross-env test_env=qa npx playwright test",
+    "env-qa-headed": "cross-env test_env=qa npx playwright test --headed",
+    "env-qa-tag": "cross-env test_env=qa npx playwright test --headed --grep"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "@playwright/test": "^1.53.1",
+    "@types/node": "^20.8.9",
+    "@types/pdf-parse": "^1.1.4",
+    "@typescript-eslint/eslint-plugin": "^6.21.0",
+    "@typescript-eslint/parser": "^6.21.0",
+    "cross-env": "^7.0.3",
+    "dotenv": "^16.4.7",
+    "eslint": "^8.57.0",
+    "eslint-config-prettier": "^10.1.5",
+    "eslint-plugin-prettier": "^5.4.1",
+    "playwright": "^1.50.1",
+    "prettier": "^3.5.3",
+    "typescript": "^5.3.3"
+  },
+  "dependencies": {
+    "axios": "^1.8.3",
+    "csv-parse": "^5.5.6",
+    "mammoth": "^1.8.0",
+    "pdf-parse": "^1.1.1"
+  }
+}

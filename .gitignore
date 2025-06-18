@@ -1,0 +1,43 @@
+# Logs
+logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+lerna-debug.log*
+.pnpm-debug.log*
+
+# Dependency directories
+node_modules/
+
+#reports
+playwright-report/
+
+# TypeScript cache
+*.tsbuildinfo
+
+# Optional npm cache directory
+.npm
+
+# Optional eslint cache
+.eslintcache
+
+# Optional stylelint cache
+.stylelintcache
+
+# dotenv environment variable files
+.env
+.env.qa
+.env.staging
+.env.beta
+.env.production
+
+#report files
+/test-results/
+/playwright-report/
+/blob-report/
+/playwright/.cache/
+.DS_Store
+
+/downloads/
+playwright/.auth

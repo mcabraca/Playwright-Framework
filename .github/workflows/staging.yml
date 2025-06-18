@@ -1,0 +1,67 @@
+name: Playwright Automated Tests
+
+on:
+  schedule:
+    - cron: "0 0 * * *" # Runs every day at midnight UTC
+  workflow_dispatch:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    container: mcr.microsoft.com/playwright:v1.52.0-jammy
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Install Dependencies
+        run: npm install
+
+      # - name: Grant execute permission to all scripts #  This prevents permission issues when GitHub Actions attempts to execute them.
+      #   run: chmod +x .github/scripts/*.sh
+
+      # - name: Install XML Tools
+      #   run: apt-get update && apt-get install -y libxml2-utils
+
+      - name: Run Playwright Tests
+        # env:
+        #   USERNAME: ${{ secrets.USERNAME }}
+        #   PASSWORD: ${{ secrets.PASSWORD }}
+        #   USEREMAIL: ${{ secrets.USEREMAIL }}
+        #   BASE_URL: ${{ secrets.BASE_URL }}
+        run: npx playwright test 
+        continue-on-error: true
+
+      - name: Upload Playwright Report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-report
+          path: playwright-report
+          retention-days: 7 # Number of days to keep the artifact
+
+      # - name: Parse JUnit XML Test Results for Slack Notification
+      #   id: test_results
+      #   run: .github/scripts/parse_junit_results.sh
+
+      # - name: Report Test Results to TestRail
+      #   env:
+      #     TESTRAIL_URL: ${{ secrets.TESTRAIL_URL }}
+      #     TESTRAIL_USERNAME: ${{ secrets.USEREMAIL_TESTRAIL }}
+      #     TESTRAIL_API_KEY: ${{ secrets.TRCLI_KEY}}
+      #     TESTRAIL_PROJECT_ID: 
+      #     TESTRAIL_SECTION_ID:  # Section ID for the tests
+      #   run: node .github/scripts/report_testrail_results.js #run_id  is stored in testrail_run_id.txt
+
+      # - name: Set TestRail Run ID from txt to env variable
+      #   run: echo "TESTRAIL_RUN_ID=$(cat testrail_run_id.txt)" >> $GITHUB_ENV
+
+      # - name: Send Slack Notification
+      #   env:
+      #     GITHUB_RUN_URL: "https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+      #     SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+      #     PASSED: ${{ env.PASSED }}
+      #     TOTAL: ${{ env.TOTAL }}
+      #     FAILED: ${{ env.FAILED }}
+      #     TESTRAIL_RUN_ID: ${{ env.TESTRAIL_RUN_ID }}
+      #   run: bash .github/scripts/send_slack_notification_staging.sh
