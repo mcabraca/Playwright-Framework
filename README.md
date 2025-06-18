@@ -3,24 +3,17 @@
 Test automation
 ​
 
-## Basic commands
-
-Playwright install command
+## Installation
+After clone project 
 
 ```
+npm install
 npm init playwright@latest
 
 ```
-
-​HTML Reports
-
-```
-npx playwright show-report
-```
+Do not overwrite config.ts file
 
 ## ENV for credentials / data storage
-
-​
 You need to copy `.env.copy` that has some sample values and fill it as needed
 
 ```
@@ -28,7 +21,7 @@ You need to copy `.env.copy` that has some sample values and fill it as needed
 ```
 
 ​Do not upload .env files with filled data to this repository.
-Sensitive data managed via .env files should be securely replaced with encrypted **GitHub Actions secrets**.
+For GitHub Actions execution sensitive data managed via .env files should be securely replaced with encrypted **GitHub Actions secrets**.
 
 ## Run tests
 
@@ -43,12 +36,17 @@ To run a specific test file, append part of the file name:
 ```bash
 npm run env-qa-headed example
 ```
+**Note:** Full file name is not required — the match only needs to **contain** the file name (e.g., `example` matches `example.spec.ts`). More scripts could be added in package.json
 
-> ℹ️ **Note:** Full file name is not required — the match only needs to **contain** the file name (e.g., `example` matches `example.spec.ts`). More scripts could be added in package.json
+
+View report
+```bash
+npx playwright show-report
+```
 
 ## Report to TestRail
 
-This project includes a powerful custom script, `report_testrail_results.js`, which automatically parses JUnit XML reports and publishes the results to [TestRail](https://www.gurock.com/testrail/). It supports:
+This project includes a powerful custom script, `report_testrail_results.js`, which automatically parses JUnit XML reports and publishes the results to [TestRail](https://www.testrail.com/). It supports:
 
 - Mapping test names (e.g., `C12345`) to TestRail case IDs
 - Creating new test cases dynamically if no case ID exists
