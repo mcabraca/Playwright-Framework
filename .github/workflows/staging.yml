@@ -24,11 +24,11 @@ jobs:
       #   run: apt-get update && apt-get install -y libxml2-utils
 
       - name: Run Playwright Tests
-        # env:
+        env:
         #   USERNAME: ${{ secrets.USERNAME }}
         #   PASSWORD: ${{ secrets.PASSWORD }}
         #   USEREMAIL: ${{ secrets.USEREMAIL }}
-        #   BASE_URL: ${{ secrets.BASE_URL }}
+          BASE_URL: ${{ secrets.BASE_URL }}
         run: npx playwright test 
         continue-on-error: true
 
