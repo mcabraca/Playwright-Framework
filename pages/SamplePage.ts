@@ -29,7 +29,7 @@ export class SamplePage extends BasePage {
     await this.fillInput("#contact-form-comment-g2599-comment", comment);
   }
 
-  async asyncsubmitForm() {
+  async submitForm() {
     await this.page.getByRole("button", { name: "Submit" }).click();
   }
   async validateInformation(
