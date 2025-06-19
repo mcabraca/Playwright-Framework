@@ -32,7 +32,14 @@ export default defineConfig({
     ["html", { open: "always" }],
     ["list"],
     ["junit", testRailOptions],
+    [
+      "./node_modules/@testomatio/reporter/lib/adapter/playwright.js",
+      {
+        apiKey: process.env.TESTOMATIO,
+      },
+    ],
   ],
+
   /* Shared settings for all the projects below. See https://playwright.dev/docs/api/class-testoptions. */
   use: {
     viewport: { width: 1920, height: 1080 },
