@@ -45,19 +45,19 @@ View report
 ```bash
 npx playwright show-report
 ```
-### 🧩 Run & Debug Tests in VS Code
+### Run & Debug Tests in VS Code
 
 To run or debug tests inside **Visual Studio Code**, the official [Playwright Test for VS Code extension](https://playwright.dev/docs/getting-started-vscode) is **required**.
 
-#### ✅ Required Setup
+#### Required Setup
 
 1. Open VS Code.
 2. Press `Ctrl+Shift+P` (or `Cmd+Shift+P` on macOS) to open the **Command Palette**.
 3. Run:Extensions: Install Extensions
 4. Search for **Playwright Test for VS Code** and install the extension by **Microsoft**.
-> 📌 Without this extension, running and debugging tests directly from VS Code **will not work properly**.
+> Without this extension, running and debugging tests directly from VS Code **will not work properly**.
 
-#### 🧪 Features You Get With the Extension
+#### Features You Get With the Extension
 
 - Run tests from the sidebar or editor gutter.
 - Step through tests using breakpoints.
