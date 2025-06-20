@@ -1,6 +1,7 @@
 # Base-Playwright
 
-Test automation
+Test automation using POM with Playwright.
+It also includes scripts for document's assertion and report to TestRail and Slack.
 ​
 
 ## Installation
@@ -14,14 +15,15 @@ npm init playwright@latest
 Do not overwrite config.ts file
 
 ## ENV for credentials / data storage
-You need to copy `.env.copy` that has some sample values and fill it as needed
+- For local execution you need to copy `.env.copy` that has some sample values and fill it as needed
 
 ```
 .env.qa
 ```
 
 ​Do not upload .env files with filled data to this repository.
-For GitHub Actions execution sensitive data managed via .env files should be securely replaced with encrypted **GitHub Actions secrets**.
+
+- For GitHub Actions execution sensitive data managed via .env files should be securely replaced with encrypted **GitHub Actions secrets**.
 
 ## Run tests
 
@@ -48,7 +50,7 @@ npx playwright show-report
 
 This project includes a powerful custom script, `report_testrail_results.js`, which automatically parses JUnit XML reports and publishes the results to [TestRail](https://www.testrail.com/). It supports:
 
-- Mapping test names (e.g., `C12345`) to TestRail case IDs
+- Mapping test names (e.g., `C12345`) to TestRail case IDs. TestIds should be included in test description on spec.ts file( e.g. ,`test("C12345 Fill form using simplified POM and data from fixture", async ({` )
 - Creating new test cases dynamically if no case ID exists
 - Uploading result status and screenshots for failed cases
 - Creating a new test run and storing its ID for follow-up actions
