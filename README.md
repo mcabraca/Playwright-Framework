@@ -2,7 +2,7 @@
 
 Test automation using POM with Playwright.
 It also includes scripts for document's assertion and report to TestRail and Slack.
-​
+​More documentation on https://playwright.dev/docs/intro
 
 ## Installation
 After clone project 
@@ -26,6 +26,8 @@ Do not overwrite config.ts file
 - For GitHub Actions execution sensitive data managed via .env files should be securely replaced with encrypted **GitHub Actions secrets**.
 
 ## Run tests
+### From console
+The following scripts are included in package.json file
 
 ```bash
 npm run env-qa         # headless
@@ -39,7 +41,6 @@ To run a specific test file, append part of the file name:
 npm run env-qa-headed example
 ```
 **Note:** Full file name is not required — the match only needs to **contain** the file name (e.g., `example` matches `example.spec.ts`). More scripts could be added in package.json
-
 
 View report
 ```bash
