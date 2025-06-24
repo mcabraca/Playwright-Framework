@@ -57,6 +57,8 @@ To run or debug tests inside **Visual Studio Code**, the official [Playwright Te
 3. Run:Extensions: Install Extensions
 4. Search for **Playwright Test for VS Code** and install the extension by **Microsoft**.
 > Without this extension, running and debugging tests directly from VS Code **will not work properly**.
+> Using the VS Code runner requires a .env file ( without environment or other extensions)
+
 
 #### Features You Get With the Extension
 
