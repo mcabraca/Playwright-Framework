@@ -4,6 +4,7 @@ test("Fill form using simplified POM and data from fixture", async ({
   samplePage,
   testData,
 }) => {
+
   await test.step("Navigate to the form page", async () => {
     await samplePage.goto();
   });
@@ -31,4 +32,5 @@ test("Fill form using simplified POM and data from fixture", async ({
       testData.comment
     );
   });
+
 });
