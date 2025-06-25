@@ -15,15 +15,11 @@ npm init playwright@latest
 Do not overwrite config.ts file
 
 ## ENV for credentials / data storage
-- For local execution you need to copy `.env.copy` that has some sample values and fill it as needed
+For local execution, you need to create a .env file by copying the provided .env.copy template. This file contains sample keys you can fill in with your own values as needed.
 
-```
-.env.qa
-```
+You can also create additional environment files such as .env.qa, .env.staging, etc., depending on the environments you need to support. Always create these files locally; they should never be uploaded to this repository.
 
-​Do not upload .env files with filled data to this repository.
-
-- For GitHub Actions execution sensitive data managed via .env files should be securely replaced with encrypted **GitHub Actions secrets**.
+For GitHub Actions execution, any sensitive data handled via .env files should be securely stored and managed using encrypted GitHub Actions secrets, which should be referenced directly in the GitHub workflow YAML files.
 
 ## Run tests
 ### From console
