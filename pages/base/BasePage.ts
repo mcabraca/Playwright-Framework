@@ -276,15 +276,19 @@ export default class BasePage {
     const actualValue = await inputField.inputValue();
     expect(actualValue).toBe(expectedText);
   }
-/**
- * Fills the specified input field with the provided text.
- *
- * @param {Locator | string} inputField - The input field (as a Playwright Locator or selector string).
- * @param {string} text - The text to enter into the input field.
- * @returns {Promise<void>}
- */
-async fillInput(inputField: Locator | string, text: string): Promise<void> {
-  const target = typeof inputField === 'string' ? this.page.locator(inputField) : inputField;
-  await target.fill(text);
+  /**
+   * Fills the specified input field with the provided text.
+   *
+   * @param {Locator | string} inputField - The input field (as a Playwright Locator or selector string).
+   * @param {string} text - The text to enter into the input field.
+   * @returns {Promise<void>}
+   */
+  async fillInput(inputField: Locator | string, text: string): Promise<void> {
+    const target =
+      typeof inputField === "string"
+        ? this.page.locator(inputField)
+        : inputField;
+    await target.fill(text);
+  }
 }
-}
+export { Page, Locator, expect, Download };

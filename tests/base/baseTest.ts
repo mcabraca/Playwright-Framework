@@ -1,15 +1,17 @@
-import { test as baseTest, expect as baseExpect , Page } from "@playwright/test";
+import { test as baseTest, expect, Page } from "@playwright/test";
 import { randomUUID } from "crypto";
 import * as fs from "fs";
 import * as path from "path";
-import { SamplePage } from "../../pages/SamplePage"; 
+import { SamplePage } from "../../pages/SamplePage";
+import { NavigationComponent } from "../../pages/NavigationComponent";
 
 export const test = baseTest.extend<{
   page: Page;
   testData: any;
   samplePage: SamplePage;
+  navigation: NavigationComponent;
 }>({
-   testData: async ({}: any, use: (arg0: any) => any) => {
+  testData: async ({}: any, use: (arg0: any) => any) => {
     // Load test data from JSON file
     const dataPath = path.resolve(__dirname, "../../data/json/testData.json");
     const data = JSON.parse(fs.readFileSync(dataPath, "utf-8"));
@@ -19,13 +21,16 @@ export const test = baseTest.extend<{
     const samplePage = new SamplePage(page);
     await use(samplePage);
   },
-
+  navigation: async ({ page }, use) => {
+    const navigation = new NavigationComponent(page);
+    await use(navigation);
+  },
 });
 
-test.beforeEach(async ({ page }, testInfo) => {
+test.beforeEach(async ({ page }) => {
   await page.goto(`${process.env.BASE_URL}`);
   await page.setViewportSize({ width: 1800, height: 900 });
- });
+});
 
 test.afterEach(async ({ page }, testInfo) => {
   if (testInfo.status !== testInfo.expectedStatus) {
@@ -51,4 +56,4 @@ function cleanupDownloads() {
     }
   }
 }
-export { baseExpect as expect };
+export { expect };
