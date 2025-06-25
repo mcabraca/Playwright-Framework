@@ -1,5 +1,4 @@
-import { expect, Page } from "@playwright/test";
-import BasePage from "./base/BasePage";
+import BasePage, { Page, expect } from "./base/BasePage";
 
 export class SamplePage extends BasePage {
   constructor(page: Page) {
@@ -17,19 +16,19 @@ export class SamplePage extends BasePage {
     experience: string,
     comment: string
   ) {
+    //hardcoded selectors for the form fields just for demonstration purposes.
+    //view NavigationComponent.ts for a better way to handle selectors
     await this.fillInput("#g2599-name", name);
     await this.fillInput("#g2599-email", email);
     await this.fillInput("#g2599-website", website);
 
     const experienceDropdown = this.page.getByLabel("Experience");
     await this.selectOption(experienceDropdown, experience);
-
     await this.clickElementWithText("label", "Functional Testing");
-
     await this.fillInput("#contact-form-comment-g2599-comment", comment);
   }
 
-  async asyncsubmitForm() {
+  async submitForm() {
     await this.page.getByRole("button", { name: "Submit" }).click();
   }
   async validateInformation(
