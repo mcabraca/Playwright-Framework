@@ -1,4 +1,4 @@
-# Base-Playwright
+# Playwright Framework with Sample Tests and Integrations
 
 Test automation using POM with Playwright.
 It also includes scripts for document's assertion and report to TestRail and Slack.
