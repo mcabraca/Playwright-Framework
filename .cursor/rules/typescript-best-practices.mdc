@@ -1,0 +1,283 @@
+---
+description: TypeScript best practices for async handling, interfaces, clean code (DRY, KISS, YAGNI), and project conventions
+globs: "**/*.ts"
+alwaysApply: false
+---
+
+# TypeScript Best Practices
+
+> Project style is enforced by ESLint + Prettier (`prettier/prettier: error`): **2-space indent, double quotes, semicolons**. Run `npm run lint` to check (add `--fix`, i.e. `npx eslint . --ext .ts,.js --fix`, to auto-correct) and `npm run typecheck` (`tsc --noEmit`) before committing. Examples below follow the project style.
+
+## 1. Always Await Async Calls — No Floating Promises
+
+Every `async` call must be `await`ed or explicitly handled. Floating promises silently swallow errors and create flaky tests.
+
+```typescript
+// ❌ BAD — floating promise, error is swallowed
+async function loadPage() {
+  this.page.goto("/home"); // not awaited
+  someAsyncSetup(); // not awaited
+}
+
+// ✅ GOOD
+async function loadPage() {
+  await this.page.goto("/home");
+  await someAsyncSetup();
+}
+```
+
+> Not currently lint-enforced (`@typescript-eslint/no-floating-promises` is not enabled in `.eslintrc.js`), but treat it as mandatory. Consider enabling the type-checked rule set to catch these automatically.
+
+## 2. Return-Await in Async Functions
+
+Prefer `return await` inside async functions. Omitting `await` on a `return` means errors in the returned promise are lost from the stack trace.
+
+```typescript
+// ❌ BAD — if getCurrentUrl() throws, the stack trace skips this function
+async function getCurrentUrl(): Promise<string> {
+  return this.page.url();
+}
+
+// ✅ GOOD — the async frame is preserved in the stack trace
+async function getCurrentUrl(): Promise<string> {
+  return await this.page.url();
+}
+```
+
+## 3. Small, Focused Interfaces — One Concern Per Interface (SRP)
+
+Define typed interfaces for multi-field data passed to methods. Keep them small and single-purpose. Do not create large "god" interfaces that accumulate unrelated fields over time (YAGNI). Test-data shapes live in `data/types/` (e.g. `data/types/TestData.ts`).
+
+```typescript
+// ❌ BAD — raw string parameters, no type safety
+// (see SamplePage.fillForm — a good candidate to refactor into an interface)
+async fillForm(name: string, email: string, website: string, experience: string, comment: string) { ... }
+
+// ✅ GOOD — typed interface, self-documenting, reusable
+export interface TestData {
+  name: string;
+  email: string;
+  website: string;
+  experience: string;
+  comment: string;
+}
+
+async fillForm(data: TestData) { ... }
+```
+
+## 4. Use Guard Clauses to Avoid Deep Nesting (KISS)
+
+Fail fast at the top of a function instead of wrapping the happy path in deeply nested `if/else` blocks.
+
+```typescript
+// ❌ BAD — happy path buried in nesting
+function processResult(result: string | null) {
+  if (result) {
+    if (result.length > 0) {
+      doSomething(result);
+    }
+  }
+}
+
+// ✅ GOOD — guard clauses, flat structure
+function processResult(result: string | null) {
+  if (!result) return;
+  if (result.length === 0) return;
+  doSomething(result);
+}
+```
+
+When a required dependency is missing, throw — never silently skip, or the test passes vacuously:
+
+```typescript
+// ❌ BAD — assertion is skipped if the element was never resolved
+if (locator != undefined) {
+  await expect(locator).toBeVisible();
+}
+
+// ✅ GOOD — fails immediately with a clear, actionable error
+if (!locator) {
+  throw new Error("locator not initialized. Did the page object construct it?");
+}
+await expect(locator).toBeVisible();
+```
+
+## 5. Eliminate Duplication with a Lookup Map (DRY)
+
+Replace repeated `if/else if` chains that map a key to a value with a lookup object.
+
+```typescript
+// ❌ BAD — duplicated structure, hard to extend
+private getMenu(name: string): Locator {
+  if (name === "About") return this.aboutMenu;
+  else if (name === "Contact Us") return this.contactUsMenu;
+  else throw new Error(`Unknown menu: ${name}`);
+}
+
+// ✅ GOOD — lookup map, O(1), trivially extendable
+type MenuName = "About" | "Cheatsheets" | "Contact Us";
+
+private menuMap: Record<MenuName, Locator>;
+
+constructor(page: Page) {
+  super(page);
+  this.menuMap = {
+    About: this.page.locator("#menu a", { hasText: "About" }),
+    Cheatsheets: this.page.locator("#menu a", { hasText: "Cheatsheets" }),
+    "Contact Us": this.page.locator("#menu a", { hasText: "Contact Us" }),
+  };
+}
+
+private getMenu(name: MenuName): Locator {
+  const menu = this.menuMap[name];
+  if (!menu) throw new Error(`Unknown menu: ${name}`);
+  return menu;
+}
+```
+
+## 6. Prefer `const` Over `let` (Immutability by Default)
+
+Declare variables with `const` unless you explicitly need to reassign. It signals intent and prevents accidental mutation.
+
+```typescript
+// ❌ BAD
+let url = process.env.BASE_URL;
+let timeout = 15000;
+
+// ✅ GOOD
+const url = process.env.BASE_URL;
+const timeout = 15000;
+```
+
+## 7. No `any` Without Justification
+
+`any` disables type checking silently. Use `unknown` when the type is genuinely uncertain and narrow it with a type guard, or use the correct specific type.
+
+```typescript
+// ❌ BAD
+function parseResult(data: any) {
+  return data.value;
+}
+
+// ✅ GOOD — unknown + type guard
+function parseResult(data: unknown): string {
+  if (typeof data === "object" && data !== null && "value" in data) {
+    return String((data as { value: unknown }).value);
+  }
+  throw new Error("Unexpected result shape");
+}
+```
+
+## 8. Use Union Types Instead of Raw Strings for Known Sets (KISS)
+
+When a parameter can only be one of a known set of values, use a union type instead of `string`. This catches typos at compile time.
+
+```typescript
+// ❌ BAD — any string accepted, typos silently fail
+async function answerQuestion(answer: string) { ... }
+
+// ✅ GOOD — constrained to valid values
+type YesNo = "Yes" | "No";
+async function answerQuestion(answer: YesNo) { ... }
+```
+
+## 9. Centralize Environment Configuration
+
+Environment variables are loaded by `dotenv` in `playwright.config.ts` (`dotenv.config()`). The base URL is wired into Playwright via `use.baseURL = process.env.BASE_URL`, so page objects should navigate with **relative paths** (`page.goto("/")`) and let Playwright resolve the base URL — don't hard-code full URLs or scatter `process.env` reads through page objects and specs.
+
+```typescript
+// ❌ BAD — hard-coded host, bypasses baseURL config
+await this.page.goto("https://www.globalsqa.com/samplepagetest/");
+
+// ✅ GOOD — relative path resolves against use.baseURL from playwright.config.ts
+await this.page.goto("/samplepagetest/", { waitUntil: "domcontentloaded" });
+```
+
+Keep raw `process.env` access in config/setup files (`playwright.config.ts`, `utils/globalSetup.ts`, `tests/auth.setup.ts`). When adding a new variable, also add it (blank value) to `.env.copy` so the contract is documented.
+
+## 10. No Single-Use Local Variables — Inline Directly (KISS)
+
+If a `const` is assigned once and then used exactly once in the same method, remove it and chain the call inline. The intermediate variable adds lines without adding clarity.
+
+```typescript
+// ❌ BAD — `dropdown` is created only to be used on the very next line
+async selectExperience(experience: string): Promise<void> {
+  const dropdown = this.page.getByLabel("Experience");
+  await dropdown.selectOption(experience);
+}
+
+// ✅ GOOD — chain directly; no intermediate variable needed
+async selectExperience(experience: string): Promise<void> {
+  await this.page.getByLabel("Experience").selectOption(experience);
+}
+```
+
+**When a local variable IS appropriate:**
+
+- It is referenced **two or more times** in the same method — naming it avoids repeating a long expression.
+- It meaningfully improves readability by giving a complex expression a domain name.
+
+```typescript
+// ✅ GOOD — `baseContainer` used three times; variable prevents repetition
+async toggleSwitchBox(selector: string, toggled: boolean) {
+  const baseContainer = this.page.locator(selector);
+  await expect(baseContainer).toBeVisible();
+  const toggledOn = await baseContainer.locator('[class*="switch-off"]').isHidden();
+  if (toggledOn != toggled) {
+    await baseContainer.locator('[class*="switch-"]').click();
+  }
+}
+```
+
+## 11. Don't Add What You Don't Need (YAGNI)
+
+Don't build abstractions, parameters, or utilities speculatively. Add them when a second real use case exists.
+
+```typescript
+// ❌ BAD — "just in case" parameter that nothing uses yet
+async clickSubmit(options?: { waitForNavigation?: boolean; retries?: number }) { ... }
+
+// ✅ GOOD — simple until complexity is actually needed
+async submitForm() {
+  await this.page.getByRole("button", { name: "Submit" }).click();
+}
+```
+
+## 12. No Unused Imports or Variables
+
+Remove all imports and variables that are declared but never used. They create noise and trigger `@typescript-eslint/no-unused-vars` (currently `warn` in `.eslintrc.js`).
+
+```typescript
+// ❌ BAD — unused import and unused variable
+import { Page, Locator, Download } from "@playwright/test"; // Download unused
+
+async function run() {
+  const unused = "never read";
+  await doWork();
+}
+
+// ✅ GOOD — only what is actually used
+import { Page, Locator } from "@playwright/test";
+
+async function run() {
+  await doWork();
+}
+```
+
+---
+
+## Quick Reference
+
+| Principle       | Do                                                          | Avoid                                              |
+| --------------- | ----------------------------------------------------------- | -------------------------------------------------- |
+| Async           | `await` every async call, `return await`                    | Floating promises, bare `return promise`           |
+| Interfaces      | Small, focused, typed data objects (`data/types/`)          | Multiple raw string parameters                     |
+| Guard clauses   | Fail-fast at the top; throw on missing deps                 | Deep `if/else` nesting; silent skips               |
+| Duplication     | Lookup maps for key→locator patterns                        | Repeated `if/else if` chains                       |
+| Variables       | `const` by default                                          | `let` unless reassignment is needed                |
+| Type safety     | `unknown` + type guard                                      | `any`                                              |
+| Known values    | Union types                                                 | Raw `string` for constrained params                |
+| Env config      | `baseURL` + relative `goto`; `process.env` only in config   | Hard-coded URLs; `process.env` in page objects     |
+| Complexity      | Add when needed                                             | Speculative abstractions                           |
+| Local variables | Inline if used once; name it only when used 2+ times        | Single-use intermediate variables                  |
+| Imports         | Only import what is used                                    | Unused imports or variables                        |

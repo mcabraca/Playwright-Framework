@@ -6,7 +6,7 @@ export class SamplePage extends BasePage {
   }
 
   async goto() {
-    await this.page.goto("/samplepagetest/");
+    await this.page.goto("/samplepagetest/", { waitUntil: "domcontentloaded" });
   }
 
   async fillForm(
@@ -14,7 +14,7 @@ export class SamplePage extends BasePage {
     email: string,
     website: string,
     experience: string,
-    comment: string
+    comment: string,
   ) {
     //hardcoded selectors for the form fields just for demonstration purposes.
     //view NavigationComponent.ts for a better way to handle selectors
@@ -36,7 +36,7 @@ export class SamplePage extends BasePage {
     email: string,
     website: string,
     experience: string,
-    comment: string
+    comment: string,
   ) {
     await expect(this.page.getByText(name)).toBeVisible();
     await expect(this.page.getByText(email)).toBeVisible();

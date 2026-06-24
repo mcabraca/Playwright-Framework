@@ -1,59 +1,36 @@
-import { test as baseTest, expect, Page } from "@playwright/test";
-import { randomUUID } from "crypto";
-import * as fs from "fs";
-import * as path from "path";
+import { test as baseTest, expect } from "@playwright/test";
 import { SamplePage } from "../../pages/SamplePage";
 import { NavigationComponent } from "../../pages/NavigationComponent";
+import { TodoPage } from "../../pages/TodoPage";
+import { TestData } from "../../data/types/TestData";
+import testDataJson from "../../data/json/testData.json";
+import { attachFailureScreenshot } from "../../utils/testRailUtils";
 
 export const test = baseTest.extend<{
-  page: Page;
-  testData: any;
+  testData: TestData;
   samplePage: SamplePage;
   navigation: NavigationComponent;
+  todoPage: TodoPage;
 }>({
-  testData: async ({}: any, use: (arg0: any) => any) => {
-    // Load test data from JSON file
-    const dataPath = path.resolve(__dirname, "../../data/json/testData.json");
-    const data = JSON.parse(fs.readFileSync(dataPath, "utf-8"));
-    await use(data);
+  // Playwright fixture with no dependencies uses an empty destructure pattern
+  // eslint-disable-next-line no-empty-pattern
+  testData: async ({}, use) => {
+    await use(testDataJson as TestData);
   },
   samplePage: async ({ page }, use) => {
-    const samplePage = new SamplePage(page);
-    await use(samplePage);
+    await use(new SamplePage(page));
   },
   navigation: async ({ page }, use) => {
-    const navigation = new NavigationComponent(page);
-    await use(navigation);
+    await page.goto("/");
+    await use(new NavigationComponent(page));
   },
-});
-
-test.beforeEach(async ({ page }) => {
-  await page.goto(`${process.env.BASE_URL}`);
-  await page.setViewportSize({ width: 1800, height: 900 });
+  todoPage: async ({ page }, use) => {
+    await use(new TodoPage(page));
+  },
 });
 
 test.afterEach(async ({ page }, testInfo) => {
-  if (testInfo.status !== testInfo.expectedStatus) {
-    let screenshotPath = `test-results/screenshots/screenshot-${randomUUID()}.png`;
-    await page.screenshot({ path: screenshotPath, fullPage: true });
-    testInfo.annotations.push({
-      type: "testrail_attachment",
-      description: screenshotPath,
-    });
-  }
-  await page.close();
+  await attachFailureScreenshot(page, testInfo);
 });
 
-test.afterAll(cleanupDownloads);
-
-function cleanupDownloads() {
-  const downloadDir = path.resolve(__dirname, "../../downloads");
-  if (fs.existsSync(downloadDir)) {
-    const files = fs.readdirSync(downloadDir);
-    if (files.length > 0) {
-      files.forEach((file) => fs.unlinkSync(path.join(downloadDir, file)));
-      console.log("All files in the downloads folder have been deleted.");
-    }
-  }
-}
 export { expect };

@@ -5,8 +5,11 @@
   "main": "index.js",
   "scripts": {
     "env-qa": "cross-env test_env=qa npx playwright test",
+    "env-qa-ui": "cross-env test_env=qa npx playwright test --ui",
     "env-qa-headed": "cross-env test_env=qa npx playwright test --headed",
-    "env-qa-tag": "cross-env test_env=qa npx playwright test --headed --grep"
+    "env-qa-tag": "cross-env test_env=qa npx playwright test --headed --grep",
+    "lint": "eslint . --ext .ts,.js",
+    "typecheck": "tsc --noEmit"
   },
   "keywords": [],
   "author": "",
@@ -22,13 +25,13 @@
     "eslint": "^8.57.0",
     "eslint-config-prettier": "^10.1.5",
     "eslint-plugin-prettier": "^5.4.1",
-    "playwright": "^1.50.1",
     "prettier": "^3.5.3",
     "typescript": "^5.3.3"
   },
   "dependencies": {
     "axios": "^1.8.3",
     "csv-parse": "^5.5.6",
+    "form-data": "^4.0.3",
     "mammoth": "^1.8.0",
     "pdf-parse": "^1.1.1"
   }
