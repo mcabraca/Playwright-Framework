@@ -6,7 +6,7 @@ export class NavigationComponent extends BasePage {
   readonly contactUsMenu: Locator;
   readonly searchInput: Locator;
   readonly homeLogo: Locator;
- // readonly dismissButton: Locator;
+  // readonly dismissButton: Locator;
 
   constructor(page: Page) {
     super(page);
@@ -19,7 +19,7 @@ export class NavigationComponent extends BasePage {
     });
     this.searchInput = this.page.locator("#s");
     this.homeLogo = this.page.locator("a[title='GlobalSQA'] img");
-  //  this.dismissButton = this.page.locator("#dismiss-button");
+    //  this.dismissButton = this.page.locator("#dismiss-button");
   }
 
   // Click methods for navigation elements
@@ -53,6 +53,6 @@ export class NavigationComponent extends BasePage {
     await expect(this.homeLogo).toBeVisible();
   }
   async closeAdIfPresent() {
-     await this.page.mouse.dblclick(1, 1);
+    await this.page.mouse.dblclick(1, 1);
   }
 }

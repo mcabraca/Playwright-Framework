@@ -1,0 +1,294 @@
+---
+description: Playwright best practices for page objects, locators, assertions, and test authoring
+globs: "**/*.ts"
+alwaysApply: false
+---
+
+# Playwright Best Practices
+
+> **Test runner:** This project uses **Playwright Test** (`@playwright/test`). Specs live in `tests/e2e/*.spec.ts` and use `test()` / `test.step()`. Page objects live in `pages/` and extend `BasePage` (`pages/base/BasePage.ts`). Shared fixtures (page objects + test data) are defined in `tests/base/baseTest.ts`. Note `testIdAttribute` is set to `"id"` in `playwright.config.ts`, so `getByTestId("foo")` matches `id="foo"`.
+
+## 1. Use User-Facing Locators (Role-Based)
+
+Prefer semantic, resilient locators. Avoid brittle CSS, dynamic IDs, and XPath.
+
+```typescript
+// ✅ GOOD
+await page.getByRole("button", { name: "Submit" }).click();
+await page.getByLabel("Email address").fill("test@example.com");
+await page.getByPlaceholder("Search...").fill("query");
+await page.getByText("Functional Testing").click();
+
+// ❌ BAD
+await page.locator("#submit-btn-123").click(); // dynamic/generated ID
+await page.locator("div.form > input:nth-child(2)").fill("test"); // brittle CSS
+await page.locator("xpath=..//div//div//div", { hasText: "msg" }); // XPath
+```
+
+### Exception: Generic `locator()` with Stable Selectors
+
+When no built-in locator (`getByRole`, `getByLabel`, etc.) can reliably target an element, a `locator()` using a **stable** selector is acceptable. Some existing pages do this (e.g. `NavigationComponent` uses `#menu a` with `{ hasText }`, `BasePage` helpers accept CSS selector strings). Keep these stable and semantic.
+
+```typescript
+// ✅ ACCEPTABLE — stable, semantic selector with text scoping
+this.page.locator("#menu a", { hasText: "About" });
+this.page.locator("input#cardholder-name");
+
+// ✅ ACCEPTABLE — testIdAttribute is "id", so getByTestId targets a stable id
+this.page.getByTestId("g2599-name"); // equivalent to id="g2599-name"
+
+// ❌ STILL BAD — dynamically generated IDs or positional selectors
+this.page.locator("#random-abc123"); // runtime-generated ID
+this.page.locator("input:nth-child(3)"); // positional
+```
+
+> Built-in locators are always preferred. Use `locator("#id")` only when the ID is stable (not runtime-generated) and no built-in alternative exists.
+
+## 2. Define Locators as Class Properties
+
+> Locators MUST be declared as `readonly` class properties and assigned in the constructor. Defining a locator inline inside a method body is discouraged — declare it as a field instead. This is the established pattern in `NavigationComponent.ts`.
+
+```typescript
+// ✅ PREFERRED — readonly fields declared at top, assigned in constructor
+export class NavigationComponent extends BasePage {
+  readonly aboutMenu: Locator;
+  readonly searchInput: Locator;
+  readonly homeLogo: Locator;
+
+  constructor(page: Page) {
+    super(page);
+    this.aboutMenu = this.page.locator("#menu a", { hasText: "About" });
+    this.searchInput = this.page.locator("#s");
+    this.homeLogo = this.page.locator("a[title='GlobalSQA'] img");
+  }
+
+  async clickAboutMenu(): Promise<void> {
+    await this.aboutMenu.click();
+  }
+}
+
+// ❌ AVOID — locator defined inline inside a method body
+async clickAbout(): Promise<void> {
+  await this.page.locator("#menu a", { hasText: "About" }).click(); // declare as a field instead
+}
+```
+
+> Specs read these locators directly for assertions (e.g. `await expect(navigation.homeLogo).toBeVisible()`), which is why they are `readonly` (publicly accessible) rather than `private`.
+
+## 3. Use Arrow Functions for Dynamic (Parameterized) Locators
+
+When a locator depends on a parameter, declare an arrow-function field assigned in the constructor instead of a method that returns a locator — keeps it lazy and consistent with static fields.
+
+```typescript
+// ✅ PREFERRED — declared at top, assigned in constructor (after static fields)
+export class DriversPage extends BasePage {
+  readonly submitButton: Locator;
+  readonly driverRow: (index: number) => Locator;
+
+  constructor(page: Page) {
+    super(page);
+    this.submitButton = this.page.getByRole("button", { name: "Submit" });
+    this.driverRow = (index) => this.page.getByTestId(`driver-row-${index}`);
+  }
+}
+
+// ❌ AVOID — method creates a new locator reference each call, less explicit
+async getDriverByIndex(index: number) {
+  return this.page.getByTestId(`driver-name-${index}`);
+}
+```
+
+## 4. Chain Locators for Scoped Queries
+
+Scope child locators to a parent to avoid ambiguous matches.
+
+```typescript
+// ✅ GOOD — child scoped to parent (BasePage.locateWithText does this)
+locateWithText(selector: string, text: string) {
+  return this.page.locator(selector).getByText(text, { exact: true });
+}
+```
+
+## 5. No Hard-Coded Waits — Use Web-First Assertions
+
+Never use `waitForTimeout`. Let Playwright's auto-waiting handle synchronization (`expect.timeout` is 15s in `playwright.config.ts`).
+
+```typescript
+// ✅ GOOD
+await page.getByRole("button", { name: "Submit" }).click();
+await expect(page.getByText("Success")).toBeVisible();
+await expect(page).toHaveURL(/\/about\/?$/);
+
+// ❌ BAD
+await page.click("button");
+await page.waitForTimeout(3000);
+```
+
+## 6. Prefer Assertions Over Manual Retry Loops
+
+Use web-first assertions (`expect(...).toBeVisible({ timeout })`, `.toBeHidden()`, `.toHaveText()`, etc.) instead of custom retry/polling wrappers.
+
+```typescript
+// ✅ GOOD
+await expect(this.searchInput).toBeVisible({ timeout: 15_000 });
+await this.searchInput.fill(text);
+
+// ❌ BAD — custom retry inflates execution time and hides real errors
+await retry(async () => {
+  await this.searchInput.fill(text);
+});
+```
+
+## 7. Separate Action and Assertion Methods
+
+Keep page action methods and assertion methods distinct for readability and reuse (SRP). `NavigationComponent` follows this: `clickAboutMenu()` (action) vs `isMenuVisible()` (assertion).
+
+```typescript
+// ✅ GOOD
+async clickAboutMenu(): Promise<void> {
+  await this.aboutMenu.click();
+}
+
+async isMenuVisible(): Promise<void> {
+  await expect(this.aboutMenu).toBeVisible();
+  await expect(this.searchInput).toBeVisible();
+  await expect(this.homeLogo).toBeVisible();
+}
+```
+
+## 8. Use Type-Safe Parameters with Interfaces
+
+Accept typed data objects in page methods instead of long lists of individual string parameters. Data shapes belong in `data/types/` (e.g. `TestData`). `SamplePage.fillForm(name, email, website, ...)` is a good candidate to refactor toward this pattern.
+
+```typescript
+// ✅ GOOD
+import { TestData } from "../data/types/TestData";
+
+async fillForm(data: TestData) {
+  await this.fillInput("#g2599-name", data.name);
+  await this.fillInput("#g2599-email", data.email);
+  await this.fillInput("#g2599-website", data.website);
+}
+```
+
+## 9. Put Shared Interaction Helpers in `BasePage` (DRY)
+
+This project has a real `BasePage` (`pages/base/BasePage.ts`) that all page objects extend. Page-agnostic interaction patterns (fill, toggle, dropdown, visibility assertions) belong there and accept a `Locator` or selector string as a parameter. Add new reusable helpers to `BasePage` rather than duplicating them across page objects.
+
+```typescript
+// ✅ GOOD — generic helper lives in BasePage, parameterized by locator/selector
+async fillInput(inputField: Locator | string, text: string): Promise<void> {
+  const target =
+    typeof inputField === "string" ? this.page.locator(inputField) : inputField;
+  await target.fill(text);
+}
+
+async selectOption(dropdown: Locator, option: string) {
+  await dropdown.selectOption(option);
+}
+```
+
+> `BasePage` re-exports `Page`, `Locator`, `expect`, and `Download` from `@playwright/test`, so page objects import them from `./base/BasePage`.
+
+## 10. Compose Pages with Component Objects
+
+Break large pages into focused component classes (which also extend `BasePage`) and expose them as fixtures. `NavigationComponent` is an example — a reusable navigation component used across specs.
+
+```typescript
+// ✅ GOOD — a focused component, registered as a fixture in tests/base/baseTest.ts
+export class NavigationComponent extends BasePage {
+  readonly aboutMenu: Locator;
+
+  constructor(page: Page) {
+    super(page);
+    this.aboutMenu = this.page.locator("#menu a", { hasText: "About" });
+  }
+
+  async clickAboutMenu(): Promise<void> {
+    await this.aboutMenu.click();
+  }
+}
+```
+
+## 11. Use Fixtures for Page Objects and Test Data
+
+Instantiate page objects and load test data through Playwright fixtures in `tests/base/baseTest.ts`, then destructure them in specs. Don't `new` page objects inside spec bodies.
+
+```typescript
+// ✅ GOOD — fixture provides the page object; spec just uses it
+export const test = baseTest.extend<{ samplePage: SamplePage }>({
+  samplePage: async ({ page }, use) => {
+    await use(new SamplePage(page));
+  },
+});
+
+// in the spec
+test("fill form", async ({ samplePage, testData }) => {
+  await samplePage.goto();
+  await samplePage.fillForm(testData);
+});
+```
+
+Wrap distinct phases in `test.step()` for readable reports (see `sampleTest.spec.ts`, `navigationTest.spec.ts`).
+
+## 12. Soft Assertions Are Allowed (Use Sparingly)
+
+```typescript
+// ✅ Hard assertion (default) — stops the test on first failure
+await expect(this.page.getByText(data.name)).toBeVisible();
+
+// ✅ Soft assertion — collects multiple failures, useful for verifying a whole form
+await expect.soft(this.page.getByText(data.name)).toBeVisible();
+await expect.soft(this.page.getByText(data.email)).toBeVisible();
+await expect.soft(this.page.getByText(data.website)).toBeVisible();
+```
+
+> Default to hard `expect()`. Reach for `expect.soft()` only when checking a group of independent values where seeing every failure at once is more useful than failing fast.
+
+## 13. POM Method Abstraction — Keep It Shallow (Max 2 Layers)
+
+A page object method should be at most **two layers** deep:
+
+| Layer       | Name          | Definition                                                                                   | Called by                       |
+| ----------- | ------------- | -------------------------------------------------------------------------------------------- | ------------------------------- |
+| **Layer 1** | **Atomic**    | Directly interacts with a locator (click, fill, `expect`, etc.). No calls to other page-object methods. | Specs *or* Layer 2 methods      |
+| **Layer 2** | **Composite** | Groups two or more Layer 1 calls to complete one logical action. Calls Layer 1 methods only. | Specs only                      |
+
+Avoid a third layer (a composite calling another composite) — it hides what the test does and makes failures harder to diagnose.
+
+```typescript
+// ✅ LAYER 1 — atomic, directly on a locator
+async clickAboutMenu(): Promise<void> {
+  await this.aboutMenu.click();
+}
+
+// ✅ LAYER 2 — composite, groups Layer 1 calls
+async searchFor(text: string): Promise<void> {
+  await this.searchInput.fill(text);
+  await this.searchInput.press("Enter");
+}
+
+// ❌ AVOID — Layer 3: composite calling another composite
+async runFullNavigationFlow(): Promise<void> {
+  await this.searchFor("about"); // composite calling composite
+  await this.completeContactFlow(); // composite calling composite
+}
+```
+
+> **Inherited `BasePage` helpers don't count as a layer.** Calling `this.fillInput(...)`, `this.selectOption(...)`, etc. is using a shared utility, not a page-object composition layer.
+
+## Quick Reference
+
+| Pattern             | Prefer                                                                 | Avoid                                            |
+| ------------------- | ---------------------------------------------------------------------- | ------------------------------------------------ |
+| Locators            | `getByRole`, `getByLabel`, `getByText`, `getByTestId` (= `id`)         | Brittle CSS, XPath, dynamic IDs                  |
+| Generic locators    | Stable `locator("#id")` / `locator("sel", { hasText })` when needed    | Runtime-generated IDs, positional CSS            |
+| Locator placement   | `readonly` field declared at top + assigned in constructor             | Inline locators inside method bodies             |
+| Dynamic locators    | `readonly fn: (x) => Locator` assigned in constructor (after static)   | Methods that return a fresh locator              |
+| Waiting             | `expect(...).toBeVisible()`                                            | `waitForTimeout`, custom retry loops             |
+| Assertions          | Web-first `expect(locator).toHaveText()`                               | `textContent()` + manual checks                  |
+| Soft assertions     | `expect.soft()` for multi-field checks (Playwright runner supports it) | Overusing soft asserts where fail-fast is better |
+| Page params         | Typed interfaces (`data/types/`)                                       | Long lists of raw string args                    |
+| Shared helpers      | Add to `BasePage`                                                      | Duplicating helpers across page objects          |
+| Page objects        | Provide via fixtures in `tests/base/baseTest.ts`                       | `new`-ing page objects inside specs              |
+| POM method depth    | Max 2 layers: atomic + composite                                       | Layer 3+ (composite calling composite)           |

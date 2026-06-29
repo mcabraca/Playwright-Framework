@@ -5,21 +5,31 @@ module.exports = {
     node: true,
     es2021: true,
   },
+  parser: "@typescript-eslint/parser",
   parserOptions: {
     ecmaVersion: "latest",
     sourceType: "module",
+    project: "./tsconfig.json",
+    tsconfigRootDir: __dirname,
   },
   extends: [
     "eslint:recommended",
-    "plugin:prettier/recommended", // Enables eslint-plugin-prettier and displays Prettier errors as ESLint errors.
-    "prettier", // Disables ESLint rules that conflict with Prettier
+    "plugin:@typescript-eslint/recommended",
+    "plugin:prettier/recommended",
+    "prettier",
   ],
-  plugins: ["prettier"],
+  plugins: ["@typescript-eslint", "prettier"],
   rules: {
-    // Example custom rules
     "prettier/prettier": "error",
-    "no-unused-vars": "warn",
+    "@typescript-eslint/no-unused-vars": "warn",
+    "@typescript-eslint/no-floating-promises": "error",
+    "@typescript-eslint/return-await": ["error", "always"],
     "no-console": "off",
   },
-  ignorePatterns: ["dist/", "node_modules/"],
+  ignorePatterns: [
+    "dist/",
+    "node_modules/",
+    "playwright-report/",
+    "test-results/",
+  ],
 };

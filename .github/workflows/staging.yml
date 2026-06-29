@@ -29,8 +29,7 @@ jobs:
         #   PASSWORD: ${{ secrets.PASSWORD }}
         #   USEREMAIL: ${{ secrets.USEREMAIL }}
           BASE_URL: ${{ secrets.BASE_URL }}
-        run: npx playwright test 
-        continue-on-error: true
+        run: npx playwright test
 
       - name: Upload Playwright Report
         if: always()
@@ -49,7 +48,7 @@ jobs:
       #     TESTRAIL_URL: ${{ secrets.TESTRAIL_URL }}
       #     TESTRAIL_USERNAME: ${{ secrets.USEREMAIL_TESTRAIL }}
       #     TESTRAIL_API_KEY: ${{ secrets.TRCLI_KEY}}
-      #     TESTRAIL_PROJECT_ID: 
+      #     TESTRAIL_PROJECT_ID:
       #     TESTRAIL_SECTION_ID:  # Section ID for the tests
       #   run: node .github/scripts/report_testrail_results.js #run_id  is stored in testrail_run_id.txt
 
@@ -64,4 +63,4 @@ jobs:
       #     TOTAL: ${{ env.TOTAL }}
       #     FAILED: ${{ env.FAILED }}
       #     TESTRAIL_RUN_ID: ${{ env.TESTRAIL_RUN_ID }}
-      #   run: bash .github/scripts/send_slack_notification_staging.sh
+      #   run: bash .github/scripts/send_slack_notification.sh

@@ -10,9 +10,9 @@ import mammoth from "mammoth";
 /**
  * Reads JSON data from a file.
  * @param {string} filePath - The path to the JSON file.
- * @returns {Promise<any>} A promise that resolves to the parsed JSON data.
+ * @returns {Promise<unknown>} A promise that resolves to the parsed JSON data.
  */
-export async function readJsonData(filePath: string): Promise<any> {
+export async function readJsonData(filePath: string): Promise<unknown> {
   const data = await fs.readFile(filePath, "utf-8");
   return JSON.parse(data);
 }
@@ -38,7 +38,9 @@ export async function downloadAndSave(download: Download): Promise<string> {
  * @param {string} directory - The directory path to the CSV file that includes the expected headers.
  * @returns {Promise<string[]>} A promise that resolves to an array of expected headers.
  */
-export async function getExpectedHeadersFromCSV(directory: string): Promise<string[]> {
+export async function getExpectedHeadersFromCSV(
+  directory: string,
+): Promise<string[]> {
   const filePath = path.resolve(__dirname, directory);
   const expectedHeaders = parse(fs2.readFileSync(filePath, "utf-8"))[0];
   return expectedHeaders;
@@ -63,7 +65,9 @@ export async function validateCSVHeaders(
 
   // Read the first line (headers)
   for await (const line of rl) {
-    const headers = line.split(",").map((header) => header.trim().replace(/['"]+/g, ""));
+    const headers = line
+      .split(",")
+      .map((header) => header.trim().replace(/['"]+/g, ""));
     expect(headers).toEqual(expectedHeaders);
     result = true;
     break;
@@ -115,16 +119,22 @@ export async function assertStringsInWordDocument(
   searchStrings: string[],
 ): Promise<void> {
   try {
-    const { value: textContent } = await mammoth.extractRawText({ path: filePath });
+    const { value: textContent } = await mammoth.extractRawText({
+      path: filePath,
+    });
     for (const searchString of searchStrings) {
       const found = textContent.includes(searchString);
-      expect.soft(found, `Expected to find "${searchString}" in the Word file.`).toBe(true);
+      expect
+        .soft(found, `Expected to find "${searchString}" in the Word file.`)
+        .toBe(true);
       console.log(
         `The string "${searchString}" was ${found ? "found" : "not found"} in the Word file.`,
       );
     }
   } catch (error) {
-    throw new Error("An error occurred while searching for strings in the Word file.");
+    throw new Error(
+      "An error occurred while searching for strings in the Word file.",
+    );
   }
 }
 
@@ -134,7 +144,10 @@ export async function assertStringsInWordDocument(
  * @param {string[]} [expectedHeaders] - Array of expected headers only for CSV validation.
  * @returns {Promise<void>} A promise that resolves when the validation is complete.
  */
-export async function validateDownload(filePath: string, expectedHeaders?: string[]) {
+export async function validateDownload(
+  filePath: string,
+  expectedHeaders?: string[],
+) {
   // Step 1: Check if file exists and is not empty
   if (!fs2.existsSync(filePath)) {
     throw new Error(`File does not exist: ${filePath}`);
@@ -156,6 +169,9 @@ export async function validateDownload(filePath: string, expectedHeaders?: strin
     throw new Error(`Unsupported file format: ${ext}`);
   }
   expect(validationResult).toBe(true);
-  const result = validationResult === true ? "File validation passed." : "File validation failed";
+  const result =
+    validationResult === true
+      ? "File validation passed."
+      : "File validation failed";
   console.log(result);
 }

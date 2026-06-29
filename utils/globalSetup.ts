@@ -1,7 +1,6 @@
-import { FullConfig } from "@playwright/test";
 import * as dotenv from "dotenv";
 
-async function globalSetup(config: FullConfig) {
+async function globalSetup() {
   if (process.env.test_env) {
     dotenv.config({
       path: `.env.${process.env.test_env}`,

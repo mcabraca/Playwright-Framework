@@ -11,8 +11,15 @@
     "forceConsistentCasingInFileNames": true,
     "strict": true,
     "skipLibCheck": true,
-    "resolveJsonModule": true,
+    "resolveJsonModule": true
   },
-  "include": ["tests", "./.eslintrc.js", "./playwright.config.ts", "utils/FileUtils.ts"],
+  "include": [
+    "tests",
+    "pages",
+    "utils",
+    "data",
+    "./.eslintrc.js",
+    "./playwright.config.ts"
+  ],
   "exclude": ["node_modules", "dist"]
 }

@@ -68,7 +68,7 @@ export default class BasePage {
   async elementContainsText(
     selector: string,
     text: string,
-    exactMatch = false
+    exactMatch = false,
   ) {
     exactMatch
       ? await expect(this.page.locator(selector)).toHaveText(text)
@@ -85,13 +85,13 @@ export default class BasePage {
     const elementText = await this.getAllElementsText(selector);
     if (!elementText.some((x) => x.includes(text))) {
       throw new Error(
-        `Failed to find text: ${text} in list:\r\n ${elementText.toString()}`
+        `Failed to find text: ${text} in list:\r\n ${elementText.toString()}`,
       );
     }
   }
   /**
    *
-   * Assertion to determine if an element with specified text is no visibile
+   * Assertion to determine if an element with specified text is no visible
    * @param selector Element's selector
    * @param text Text to match
    * @param strictMode Boolean if the text should match exactly or contain
@@ -99,13 +99,13 @@ export default class BasePage {
   async elementTextNotVisible(
     selector: string,
     text: string,
-    strictMode = true
+    strictMode = true,
   ) {
     if (strictMode) {
       await expect(this.page.locator(selector, { hasText: text })).toBeHidden();
     } else {
       const handle = this.page.locator(`${selector}:has-text('${text}')`);
-      expect(handle.isVisible()).toBeFalsy();
+      await expect(handle).toBeHidden();
     }
   }
 
@@ -174,7 +174,7 @@ export default class BasePage {
    * @returns Text of element
    */
   async getElementText(selector: string) {
-    return this.page.locator(selector).innerText();
+    return await this.page.locator(selector).innerText();
   }
 
   /**
@@ -221,7 +221,7 @@ export default class BasePage {
    */
   async dragAndDropElements(
     originLocator: string | Locator,
-    destinationLocator: string | Locator
+    destinationLocator: string | Locator,
   ) {
     const originElement =
       typeof originLocator === "string"
@@ -272,7 +272,10 @@ export default class BasePage {
    * @param {Locator} inputField - The locator for the input field.
    * @param {string} expectedText - The expected text value of the input field.
    */
-  async assertInputValue(inputField: Locator, expectedText: string): Promise {
+  async assertInputValue(
+    inputField: Locator,
+    expectedText: string,
+  ): Promise<void> {
     const actualValue = await inputField.inputValue();
     expect(actualValue).toBe(expectedText);
   }
